@@ -1,4 +1,4 @@
-'''Train CIFAR10 with PyTorch.'''
+"""Train CIFAR10 with PyTorch."""
 from __future__ import print_function
 
 import torch
@@ -22,9 +22,9 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--seed', default=11111, type=int)
 parser.add_argument('--momentum', default=0.9, type=float)
 parser.add_argument('--weight_decay', default=5e-4, type=float)
-parser.add_argument('--epsilon', default=8.0/255, type=float)
+parser.add_argument('--epsilon', default=8.0 / 255, type=float)
 parser.add_argument('--m', default=8, type=int)
-parser.add_argument('--batch_size', default=128, type=int)
+parser.add_argument('--batch_size', default=100, type=int)
 parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
 args = parser.parse_args()
 
@@ -36,7 +36,7 @@ random.seed(seed)
 torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 np.random.seed(seed)
-torch.backends.cudnn.deterministic=True
+torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # Data
@@ -49,10 +49,8 @@ transform_train = transforms.Compose([
     # Normalization messes with l-inf bounds.
 ])
 
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
+trainset = torchvision.datasets.CIFAR10(root='data', train=True, download=True, transform=transform_train)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, drop_last=True)
-
-
 
 print('==> Building model..')
 net = WideResNet_28_10()
@@ -61,7 +59,6 @@ m = args.m
 delta = torch.zeros(args.batch_size, 3, 32, 32)
 delta = delta.to(device)
 net = net.to(device)
-
 
 if args.resume is not None:
     # Load checkpoint.
@@ -73,6 +70,7 @@ if args.resume is not None:
     torch.set_rng_state(checkpoint['rng_state'])
 
 optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
+
 
 def train(epoch):
     print('\nEpoch: %d' % epoch)
@@ -87,7 +85,7 @@ def train(epoch):
         inputs, targets = inputs.to(device), targets.to(device)
         for i in range(m):
             optimizer.zero_grad()
-            adv = (inputs+delta).detach()
+            adv = (inputs + delta).detach()
             adv.requires_grad_()
             outputs = net(adv)
             loss = F.cross_entropy(outputs, targets)
@@ -101,12 +99,11 @@ def train(epoch):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-            iterator.set_description(str(predicted.eq(targets).sum().item()/targets.size(0)))
+            iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
 
-    acc = 100.*correct/total
+    acc = 100. * correct / total
     print('Train acc:', acc)
 
-    
     print('Saving..')
     state = {
         'net': net.state_dict(),
@@ -123,9 +120,9 @@ def train(epoch):
 def adjust_learning_rate(optimizer, epoch):
     if epoch < 12:
         lr = 0.1
-    elif epoch >= 12 and epoch < 22:
+    elif 12 <= epoch < 22:
         lr = 0.01
-    elif epoch >= 22: 
+    elif epoch >= 22:
         lr = 0.001
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
