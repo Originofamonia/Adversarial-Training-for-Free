@@ -15,18 +15,18 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from utils import clamp
-from utils import normalize_by_pnorm
-from utils import clamp_by_pnorm
-from utils import is_float_or_torch_tensor
-from utils import batch_multiply
-from utils import batch_clamp
-from utils import replicate_input
-from utils import batch_l1_proj
+from models.utils import clamp
+from models.utils import normalize_by_pnorm
+from models.utils import clamp_by_pnorm
+from models.utils import is_float_or_torch_tensor
+from models.utils import batch_multiply
+from models.utils import batch_clamp
+from models.utils import replicate_input
+from models.utils import batch_l1_proj
 
-from base import Attack
-from base import LabelMixin
-from utils import rand_init_delta
+from models.base import Attack
+from models.base import LabelMixin
+from models.utils import rand_init_delta
 
 
 def perturb_iterative(xvar, yvar, predict, nb_iter, eps, eps_iter, loss_fn,

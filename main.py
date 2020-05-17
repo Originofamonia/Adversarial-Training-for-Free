@@ -19,12 +19,12 @@ import numpy as np
 from models.wideresnet import *
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--seed', default=11111, type=int)
+parser.add_argument('--seed', default=9527, type=int)
 parser.add_argument('--momentum', default=0.9, type=float)
 parser.add_argument('--weight_decay', default=5e-4, type=float)
 parser.add_argument('--epsilon', default=8.0 / 255, type=float)
 parser.add_argument('--m', default=8, type=int)
-parser.add_argument('--batch_size', default=100, type=int)
+parser.add_argument('--batch_size', default=25, type=int)
 parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
 args = parser.parse_args()
 
@@ -128,6 +128,11 @@ def adjust_learning_rate(optimizer, epoch):
         param_group['lr'] = lr
 
 
-for epoch in range(start_epoch, 27):
-    adjust_learning_rate(optimizer, epoch)
-    train(epoch)
+def main():
+    for epoch in range(start_epoch, 27):
+        adjust_learning_rate(optimizer, epoch)
+        train(epoch)
+
+
+if __name__ == '__main__':
+    main()

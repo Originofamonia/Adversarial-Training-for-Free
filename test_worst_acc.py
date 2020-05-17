@@ -1,4 +1,4 @@
-'''Train CIFAR10 with PyTorch.'''
+"""Train CIFAR10 with PyTorch."""
 from __future__ import print_function
 
 import torch
@@ -87,4 +87,10 @@ adversary = LinfPGDAttack(
     nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
     targeted=False)
 
-test(adversary)
+
+def main():
+    test(adversary)
+
+
+if __name__ == '__main__':
+    main()
