@@ -9,7 +9,7 @@ from abc import ABCMeta
 
 import torch
 
-from utils import replicate_input
+from models.utils import replicate_input
 
 
 class Attack(object):
