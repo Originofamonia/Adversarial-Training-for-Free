@@ -64,7 +64,8 @@ def perturb_iterative(xvar, yvar, predict, nb_iter, eps, eps_iter, loss_fn,
     predict.eval()
 
     for ii in range(nb_iter):
-        outputs = predict(xvar + delta)
+        h = predict(xvar + delta)
+        outputs = predict.h_to_logits(h)
         loss = loss_fn(outputs, yvar)
         if minimize:
             loss = -loss
@@ -145,7 +146,6 @@ class PGDAttack(Attack, LabelMixin):
             ord=np.inf, l1_sparsity=None, targeted=False):
         """
         Create an instance of the PGDAttack.
-
         """
         super(PGDAttack, self).__init__(
             predict, loss_fn, clip_min, clip_max)

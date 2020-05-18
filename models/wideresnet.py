@@ -84,10 +84,11 @@ class WideResNet(nn.Module):
         out = self.block1(out)
         out = self.block2(out)
         out = self.block3(out)
-        out = self.relu(self.bn1(out))
-        out = F.avg_pool2d(out, 8)
-        out = out.view(-1, self.nChannels)
-        return self.fc(out)
+        # out = self.relu(self.bn1(out))
+        # out = F.avg_pool2d(out, 8)
+        # out = out.view(-1, self.nChannels)
+        # out = self.fc(out)
+        return out
 
     def h_to_logits(self, h):
         out = self.relu(self.bn1(h))

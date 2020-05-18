@@ -1,4 +1,6 @@
 # Adversarial Training for Free
+I found this is the only working adv training version.
+
 
 This is an unofficial PyTorch implementation of the paper "Adversarial Training for Free!".<br> 
 https://128.84.21.199/pdf/1904.12843.pdf<br>

@@ -1,4 +1,7 @@
-"""Train CIFAR10 with PyTorch."""
+"""
+    Adv train for free CIFAR10 with PyTorch.
+    with loss on hidden layer
+"""
 from __future__ import print_function
 
 import torch
@@ -17,7 +20,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 from models.wideresnet import *
-from test_worst_acc import test
+from test_worst_acc import test_adv
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
@@ -33,18 +36,22 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
         inputs, targets = inputs.to(device), targets.to(device)
         for i in range(m):
             optimizer.zero_grad()
-            adv = (inputs + delta).detach()
-            adv.requires_grad_()
-            outputs = net(adv)
-            loss = F.cross_entropy(outputs, targets)
+            x_adv = (inputs + delta).detach()
+            x_adv.requires_grad_()
+            h_adv = net(x_adv)
+            adv_outputs = net.h_to_logits(h_adv)
+            loss = F.cross_entropy(adv_outputs, targets)
+            h = net(inputs)
+            h_loss = nn.MSELoss()(h_adv, h)
+            loss += h_loss
             loss.backward()
             optimizer.step()
-            grad = adv.grad.data
+            grad = x_adv.grad.data
             delta = delta.detach() + epsilon * torch.sign(grad.detach())
             delta = torch.clamp(delta, -epsilon, epsilon)
 
             train_loss += loss.item()
-            _, predicted = outputs.max(1)
+            _, predicted = adv_outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
             iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
@@ -61,7 +68,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     }
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
-    torch.save(state, './checkpoint/adv_ckpt.{}'.format(epoch))
+    torch.save(state, './checkpoint/adv_hloss_ckpt.{}'.format(epoch))
 
 
 def adjust_learning_rate(optimizer, epoch):
@@ -83,7 +90,7 @@ def main():
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=100, type=int)
-    parser.add_argument('--batch_size', default=25, type=int)
+    parser.add_argument('--batch_size', default=5, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
@@ -127,7 +134,7 @@ def main():
         # Load checkpoint.
         print('==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.resume))
+        checkpoint = torch.load('./checkpoint/adv_hloss_ckpt.{}'.format(args.resume))
         net.load_state_dict(checkpoint['net'])
         start_epoch = checkpoint['epoch'] + 1
         torch.set_rng_state(checkpoint['rng_state'])
@@ -143,7 +150,7 @@ def main():
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
         if epoch % 10 == 0:
-            test(epoch, net, testloader, device, adversary, args)
+            test_adv(epoch, net, testloader, device, adversary)
 
 
 if __name__ == '__main__':
