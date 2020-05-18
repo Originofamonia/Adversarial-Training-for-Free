@@ -19,7 +19,7 @@ from models.utils import *
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
-def test_adv(epoch, net, testloader, device, adversary):
+def test(epoch, net, testloader, device, adversary):
     net.eval()
     adv_correct = 0
     clean_correct = 0
@@ -94,7 +94,7 @@ def main():
         nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
 
-    test_adv(net, testloader, device, adversary, args)
+    test(net, testloader, device, adversary, args)
 
 
 if __name__ == '__main__':

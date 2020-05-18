@@ -19,7 +19,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 from models.wideresnet import *
-from test_worst_acc import test_adv
+from test_worst_acc import test
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
@@ -142,7 +142,7 @@ def main():
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
         if epoch % 10 == 0:
-            test_adv(epoch, net, testloader, device, adversary)
+            test(epoch, net, testloader, device, adversary)
 
 
 if __name__ == '__main__':
