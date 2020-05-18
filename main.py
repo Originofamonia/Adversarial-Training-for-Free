@@ -82,7 +82,9 @@ def main():
     parser.add_argument('--weight_decay', default=5e-4, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
+    parser.add_argument('--iteration', default=100, type=int)
     parser.add_argument('--batch_size', default=25, type=int)
+    parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
 

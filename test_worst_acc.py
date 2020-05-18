@@ -15,7 +15,7 @@ import argparse
 from tqdm import tqdm
 import numpy as np
 from models.wideresnet import *
-from utils import *
+from models.utils import *
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
