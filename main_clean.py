@@ -31,23 +31,23 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
 
     for batch_idx, (inputs, targets) in enumerate(iterator):
         inputs, targets = inputs.to(device), targets.to(device)
-        for i in range(m):
-            optimizer.zero_grad()
-            adv = (inputs + delta).detach()
-            adv.requires_grad_()
-            outputs = net(adv)
-            loss = F.cross_entropy(outputs, targets)
-            loss.backward()
-            optimizer.step()
-            grad = adv.grad.data
-            delta = delta.detach() + epsilon * torch.sign(grad.detach())
-            delta = torch.clamp(delta, -epsilon, epsilon)
+        # for i in range(m):
+        optimizer.zero_grad()
+        # adv = (inputs + delta).detach()
+        # adv.requires_grad_()
+        outputs = net(inputs)
+        loss = F.cross_entropy(outputs, targets)
+        loss.backward()
+        optimizer.step()
+        # grad = adv.grad.data
+        # delta = delta.detach() + epsilon * torch.sign(grad.detach())
+        # delta = torch.clamp(delta, -epsilon, epsilon)
 
-            train_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-            iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
+        train_loss += loss.item()
+        _, predicted = outputs.max(1)
+        total += targets.size(0)
+        correct += predicted.eq(targets).sum().item()
+        iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
 
     acc = 100. * correct / total
     print('Train acc:', acc)
@@ -61,7 +61,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     }
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
-    torch.save(state, './checkpoint/adv_ckpt.{}'.format(epoch))
+    torch.save(state, './checkpoint/clean_ckpt.{}'.format(epoch))
 
 
 def adjust_learning_rate(optimizer, epoch):
