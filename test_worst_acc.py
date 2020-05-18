@@ -18,43 +18,8 @@ from models.wideresnet import *
 from utils import *
 from models.iterative_projected_gradient import LinfPGDAttack
 
-parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Testing')
-parser.add_argument('--seed', default=11111, type=int, help='seed')
-parser.add_argument('--epoch', default=0, type=int, help='load checkpoint from that epoch')
-parser.add_argument('--model', default='wideresnet', type=str)
-parser.add_argument('--batch_size', default=100, type=int)
-parser.add_argument('--iteration', default=100, type=int)
-parser.add_argument('--epsilon', default=8. / 255, type=float)
-parser.add_argument('--step_size', default=2. / 255, type=float)
 
-args = parser.parse_args()
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-np.random.seed(args.seed)
-torch.manual_seed(args.seed)
-torch.cuda.manual_seed(args.seed)
-cudnn.benchmark = False
-cudnn.deterministic = True
-
-# Data
-print('==> Preparing data..')
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-])
-
-testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True,
-                                       transform=transform_test)
-testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
-
-print('==> Building model {}..'.format(args.model))
-if args.model == 'wideresnet':
-    net = WideResNet_28_10()
-else:
-    raise ValueError('No such model.')
-
-
-def test(epoch):
+def test(net, testloader, device, adversary, args):
     net.eval()
     correct = 0
     total = 0
@@ -75,21 +40,53 @@ def test(epoch):
     print('Test Acc of ckpt.{}: {}'.format(args.epoch, acc))
 
 
-print('==> Loading from checkpoint epoch {}..'.format(args.epoch))
-assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.epoch))
-net.load_state_dict(checkpoint['net'])
-net = net.to(device)
-net.eval()
-
-adversary = LinfPGDAttack(
-    net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
-    nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
-    targeted=False)
-
-
 def main():
-    test(adversary)
+    parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Testing')
+    parser.add_argument('--seed', default=11111, type=int, help='seed')
+    parser.add_argument('--epoch', default=10, type=int, help='load checkpoint from that epoch')
+    parser.add_argument('--model', default='wideresnet', type=str)
+    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--iteration', default=100, type=int)
+    parser.add_argument('--epsilon', default=8. / 255, type=float)
+    parser.add_argument('--step_size', default=2. / 255, type=float)
+
+    args = parser.parse_args()
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
+    cudnn.benchmark = False
+    cudnn.deterministic = True
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+
+    testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True,
+                                           transform=transform_test)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
+
+    print('==> Building model {}..'.format(args.model))
+    if args.model == 'wideresnet':
+        net = WideResNet_28_10()
+    else:
+        raise ValueError('No such model.')
+
+    print('==> Loading from checkpoint epoch {}..'.format(args.epoch))
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.epoch))
+    net.load_state_dict(checkpoint['net'])
+    net = net.to(device)
+    net.eval()
+
+    adversary = LinfPGDAttack(
+        net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
+        nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
+        targeted=False)
+
+    test(net, testloader, device, adversary, args)
 
 
 if __name__ == '__main__':

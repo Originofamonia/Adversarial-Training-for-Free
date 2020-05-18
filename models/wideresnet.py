@@ -48,7 +48,7 @@ class NetworkBlock(nn.Module):
 
 
 class WideResNet(nn.Module):
-    def __init__(self, depth, num_classes, widen_factor=1, dropRate=0.0):
+    def __init__(self, depth, num_classes, widen_factor=1, dropout=0.3):
         super(WideResNet, self).__init__()
         n_channels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
         assert ((depth - 4) % 6 == 0)
@@ -58,11 +58,11 @@ class WideResNet(nn.Module):
         self.conv1 = nn.Conv2d(3, n_channels[0], kernel_size=3, stride=1,
                                padding=1, bias=False)
         # 1st block
-        self.block1 = NetworkBlock(n, n_channels[0], n_channels[1], block, 1, dropRate)
+        self.block1 = NetworkBlock(n, n_channels[0], n_channels[1], block, 1, dropout)
         # 2nd block
-        self.block2 = NetworkBlock(n, n_channels[1], n_channels[2], block, 2, dropRate)
+        self.block2 = NetworkBlock(n, n_channels[1], n_channels[2], block, 2, dropout)
         # 3rd block
-        self.block3 = NetworkBlock(n, n_channels[2], n_channels[3], block, 2, dropRate)
+        self.block3 = NetworkBlock(n, n_channels[2], n_channels[3], block, 2, dropout)
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(n_channels[3])
         self.relu = nn.ReLU(inplace=True)
@@ -85,6 +85,12 @@ class WideResNet(nn.Module):
         out = self.block2(out)
         out = self.block3(out)
         out = self.relu(self.bn1(out))
+        out = F.avg_pool2d(out, 8)
+        out = out.view(-1, self.nChannels)
+        return self.fc(out)
+
+    def h_to_logits(self, h):
+        out = self.relu(self.bn1(h))
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.nChannels)
         return self.fc(out)

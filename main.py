@@ -18,68 +18,15 @@ import random
 import numpy as np
 from models.wideresnet import *
 
-parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--seed', default=9527, type=int)
-parser.add_argument('--momentum', default=0.9, type=float)
-parser.add_argument('--weight_decay', default=5e-4, type=float)
-parser.add_argument('--epsilon', default=8.0 / 255, type=float)
-parser.add_argument('--m', default=8, type=int)
-parser.add_argument('--batch_size', default=25, type=int)
-parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
-args = parser.parse_args()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-start_epoch = 0  # start from epoch 0 or last checkpoint epoch
-
-seed = args.seed
-random.seed(seed)
-torch.manual_seed(seed)
-torch.cuda.manual_seed(seed)
-np.random.seed(seed)
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-
-# Data
-print('==> Preparing data..')
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-    # Normalization messes with l-inf bounds.
-])
-
-trainset = torchvision.datasets.CIFAR10(root='data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, drop_last=True)
-
-print('==> Building model..')
-net = WideResNet_28_10()
-epsilon = args.epsilon
-m = args.m
-delta = torch.zeros(args.batch_size, 3, 32, 32)
-delta = delta.to(device)
-net = net.to(device)
-
-if args.resume is not None:
-    # Load checkpoint.
-    print('==> Resuming from checkpoint..')
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.resume))
-    net.load_state_dict(checkpoint['net'])
-    start_epoch = checkpoint['epoch'] + 1
-    torch.set_rng_state(checkpoint['rng_state'])
-
-optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
-
-
-def train(epoch):
+def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     print('\nEpoch: %d' % epoch)
     net.train()
     train_loss = 0
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
-    global delta
+    # global delta
 
     for batch_idx, (inputs, targets) in enumerate(iterator):
         inputs, targets = inputs.to(device), targets.to(device)
@@ -129,9 +76,60 @@ def adjust_learning_rate(optimizer, epoch):
 
 
 def main():
-    for epoch in range(start_epoch, 27):
+    parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
+    parser.add_argument('--seed', default=9527, type=int)
+    parser.add_argument('--momentum', default=0.9, type=float)
+    parser.add_argument('--weight_decay', default=5e-4, type=float)
+    parser.add_argument('--epsilon', default=8.0 / 255, type=float)
+    parser.add_argument('--m', default=8, type=int)
+    parser.add_argument('--batch_size', default=25, type=int)
+    parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
+    args = parser.parse_args()
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    start_epoch = 1  # start from epoch 0 or last checkpoint epoch
+
+    seed = args.seed
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        # Normalization messes with l-inf bounds.
+    ])
+
+    trainset = torchvision.datasets.CIFAR10(root='data', train=True, download=True, transform=transform_train)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+
+    print('==> Building model..')
+    net = WideResNet_28_10()
+    epsilon = args.epsilon
+    m = args.m
+    delta = torch.zeros(args.batch_size, 3, 32, 32)
+    delta = delta.to(device)
+    net = net.to(device)
+
+    if args.resume is not None:
+        # Load checkpoint.
+        print('==> Resuming from checkpoint..')
+        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+        checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.resume))
+        net.load_state_dict(checkpoint['net'])
+        start_epoch = checkpoint['epoch'] + 1
+        torch.set_rng_state(checkpoint['rng_state'])
+
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
+
+    for epoch in range(start_epoch, 29):
         adjust_learning_rate(optimizer, epoch)
-        train(epoch)
+        train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
 
 
 if __name__ == '__main__':
