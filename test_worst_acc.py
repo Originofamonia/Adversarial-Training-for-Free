@@ -19,7 +19,7 @@ from models.utils import *
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
-def test(net, testloader, device, adversary, args):
+def test(epoch, net, testloader, device, adversary, args):
     net.eval()
     correct = 0
     total = 0
@@ -37,7 +37,7 @@ def test(net, testloader, device, adversary, args):
 
     # Save checkpoint.
     acc = 100. * correct / total
-    print('Test Acc of ckpt.{}: {}'.format(args.epoch, acc))
+    print('Test Acc of ckpt.{}: {}'.format(epoch, acc))
 
 
 def main():

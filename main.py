@@ -143,7 +143,7 @@ def main():
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
         if epoch % 10 == 0:
-            test(net, testloader, device, adversary, args)
+            test(epoch, net, testloader, device, adversary, args)
 
 
 if __name__ == '__main__':
