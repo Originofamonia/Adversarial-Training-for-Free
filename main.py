@@ -17,6 +17,8 @@ from tqdm import tqdm
 import random
 import numpy as np
 from models.wideresnet import *
+from test_worst_acc import test
+from models.iterative_projected_gradient import LinfPGDAttack
 
 
 def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
@@ -26,7 +28,6 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
-    # global delta
 
     for batch_idx, (inputs, targets) in enumerate(iterator):
         inputs, targets = inputs.to(device), targets.to(device)
@@ -61,7 +62,6 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
     torch.save(state, './checkpoint/ckpt.{}'.format(epoch))
-    best_acc = acc
 
 
 def adjust_learning_rate(optimizer, epoch):
@@ -107,6 +107,11 @@ def main():
 
     trainset = torchvision.datasets.CIFAR10(root='data', train=True, download=True, transform=transform_train)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+    transform_test = transforms.Compose([
+        transforms.ToTensor()
+    ])
+    testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
     print('==> Building model..')
     net = WideResNet_28_10()
@@ -127,9 +132,15 @@ def main():
 
     optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
 
+    adversary = LinfPGDAttack(
+        net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
+        nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
+        targeted=False)
+
     for epoch in range(start_epoch, 29):
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
+        test(net, testloader, device, adversary, args)
 
 
 if __name__ == '__main__':
