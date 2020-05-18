@@ -139,7 +139,7 @@ def main():
         nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
 
-    for epoch in range(start_epoch, 30):
+    for epoch in range(start_epoch, 31):
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
         if epoch % 10 == 0:
