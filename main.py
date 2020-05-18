@@ -89,7 +89,7 @@ def main():
     args = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    start_epoch = 1  # start from epoch 0 or last checkpoint epoch
+    start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
     seed = args.seed
     random.seed(seed)
@@ -139,10 +139,11 @@ def main():
         nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
 
-    for epoch in range(start_epoch, 29):
+    for epoch in range(start_epoch, 30):
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
-        test(net, testloader, device, adversary, args)
+        if epoch % 10 == 0:
+            test(net, testloader, device, adversary, args)
 
 
 if __name__ == '__main__':

@@ -194,34 +194,34 @@ def torch_arctanh(x, eps=1e-6):
     return (torch.log((1 + x) / (1 - x))) * 0.5
 
 
-def clamp(input, min=None, max=None):
-    ndim = input.ndimension()
+def clamp(inputs, min=None, max=None):
+    ndim = inputs.ndimension()
     if min is None:
         pass
     elif isinstance(min, (float, int)):
-        input = torch.clamp(input, min=min)
+        inputs = torch.clamp(inputs, min=min)
     elif isinstance(min, torch.Tensor):
-        if min.ndimension() == ndim - 1 and min.shape == input.shape[1:]:
-            input = torch.max(input, min.view(1, *min.shape))
+        if min.ndimension() == ndim - 1 and min.shape == inputs.shape[1:]:
+            inputs = torch.max(inputs, min.view(1, *min.shape))
         else:
-            assert min.shape == input.shape
-            input = torch.max(input, min)
+            assert min.shape == inputs.shape
+            inputs = torch.max(inputs, min)
     else:
         raise ValueError("min can only be None | float | torch.Tensor")
 
     if max is None:
         pass
     elif isinstance(max, (float, int)):
-        input = torch.clamp(input, max=max)
+        inputs = torch.clamp(inputs, max=max)
     elif isinstance(max, torch.Tensor):
-        if max.ndimension() == ndim - 1 and max.shape == input.shape[1:]:
-            input = torch.min(input, max.view(1, *max.shape))
+        if max.ndimension() == ndim - 1 and max.shape == inputs.shape[1:]:
+            inputs = torch.min(inputs, max.view(1, *max.shape))
         else:
-            assert max.shape == input.shape
-            input = torch.min(input, max)
+            assert max.shape == inputs.shape
+            inputs = torch.min(inputs, max)
     else:
         raise ValueError("max can only be None | float | torch.Tensor")
-    return input
+    return inputs
 
 
 def to_one_hot(y, num_classes=10):
@@ -244,16 +244,16 @@ class CarliniWagnerLoss(nn.Module):
     def __init__(self):
         super(CarliniWagnerLoss, self).__init__()
 
-    def forward(self, input, target):
+    def forward(self, inputs, target):
         """
-        :param input: pre-softmax/logits.
+        :param inputs: pre-softmax/logits.
         :param target: true labels.
         :return: CW loss value.
         """
-        num_classes = input.size(1)
+        num_classes = inputs.size(1)
         label_mask = to_one_hot(target, num_classes=num_classes).float()
-        correct_logit = torch.sum(label_mask * input, dim=1)
-        wrong_logit = torch.max((1. - label_mask) * input, dim=1)[0]
+        correct_logit = torch.sum(label_mask * inputs, dim=1)
+        wrong_logit = torch.max((1. - label_mask) * inputs, dim=1)[0]
         loss = -F.relu(correct_logit - wrong_logit + 50.).sum()
         return loss
 
@@ -321,8 +321,9 @@ def batch_l1_proj_flat(x, z=1):
 
     https://gist.github.com/daien/1272551/edd95a6154106f8e28209a1c7964623ef8397246
 
+    :param z:
     :param x: input data
-    :param eps: l1 radius
+    # :param eps: l1 radius
 
     :return: tensor containing the projection.
     """
