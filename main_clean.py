@@ -72,7 +72,7 @@ def main():
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=100, type=int)
-    parser.add_argument('--batch_size', default=25, type=int)
+    parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
@@ -121,7 +121,8 @@ def main():
         start_epoch = checkpoint['epoch'] + 1
         torch.set_rng_state(checkpoint['rng_state'])
 
-    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
+    # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
+    optimizer = optim.Adam(net.parameters(), lr=1e-3)
 
     adversary = LinfPGDAttack(
         net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
@@ -129,7 +130,7 @@ def main():
         targeted=False)
 
     for epoch in range(start_epoch, args.epoch):
-        adjust_learning_rate(optimizer, epoch)
+        # adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
         if epoch % 10 == 0:
             test(epoch, net, testloader, device, adversary)
