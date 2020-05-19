@@ -137,7 +137,7 @@ def main():
 
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
-    torch.save(net.state_dict(), './checkpoint/clean_ckpt_{}.pt'.format(args.epoch))
+    torch.save(net.state_dict(), './checkpoint/clean_ckpt_adam{}.pt'.format(args.epoch))
 
 
 if __name__ == '__main__':
