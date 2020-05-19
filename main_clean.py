@@ -45,7 +45,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-        desc = 'loss: ' + str(loss)
+        desc = 'loss: ' + str(loss.item())
         iterator.set_description(desc)
 
     acc = 100. * correct / total
