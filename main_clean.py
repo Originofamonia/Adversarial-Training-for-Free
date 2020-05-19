@@ -52,17 +52,6 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     print('Train acc:', acc)
 
 
-def adjust_learning_rate(optimizer, epoch):
-    if epoch < 12:
-        lr = 0.1
-    elif 12 <= epoch < 22:
-        lr = 0.01
-    elif epoch >= 22:
-        lr = 0.001
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = lr
-
-
 def main():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--seed', default=9527, type=int)
@@ -71,7 +60,7 @@ def main():
     parser.add_argument('--weight_decay', default=5e-4, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
-    parser.add_argument('--iteration', default=100, type=int)
+    parser.add_argument('--iteration', default=20, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
@@ -104,8 +93,7 @@ def main():
     testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
-    print('==> Building model..')
-    net = WideResNet_28_10()
+    net = wide_resnet_28_10()
     epsilon = args.epsilon
     m = args.m
     delta = torch.zeros(args.batch_size, 3, 32, 32)
@@ -121,8 +109,8 @@ def main():
         start_epoch = checkpoint['epoch'] + 1
         torch.set_rng_state(checkpoint['rng_state'])
 
-    # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
-    optimizer = optim.Adam(net.parameters(), lr=4e-3, weight_decay=args.weight_decay)
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
+    # optimizer = optim.Adam(net.parameters(), lr=4e-3, weight_decay=args.weight_decay)
 
     adversary = LinfPGDAttack(
         net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
@@ -130,14 +118,13 @@ def main():
         targeted=False)
 
     for epoch in range(start_epoch, args.epoch):
-        # adjust_learning_rate(optimizer, epoch)
+        adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
-        if epoch % 10 == 0:
-            test(epoch, net, testloader, device, adversary)
 
+    test(args.epoch, net, testloader, device, adversary)
     if not os.path.isdir('checkpoint'):
         os.mkdir('checkpoint')
-    torch.save(net.state_dict(), './checkpoint/clean_ckpt_adam{}.pt'.format(args.epoch))
+    torch.save(net.state_dict(), './checkpoint/clean_ckpt{}.pt'.format(args.epoch))
 
 
 if __name__ == '__main__':

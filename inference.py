@@ -77,7 +77,7 @@ def main():
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
     if args.model == 'wideresnet':
-        net = WideResNet_28_10()
+        net = wide_resnet_28_10()
     else:
         raise ValueError('No such model.')
 
