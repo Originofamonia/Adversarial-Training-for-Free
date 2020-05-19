@@ -54,7 +54,7 @@ def main():
     parser.add_argument('--epoch', default=30, type=int, help='load checkpoint from that epoch')
     parser.add_argument('--model', default='wideresnet', type=str)
     parser.add_argument('--batch_size', default=100, type=int)
-    parser.add_argument('--iteration', default=100, type=int)
+    parser.add_argument('--iteration', default=20, type=int)
     parser.add_argument('--epsilon', default=8. / 255, type=float)
     parser.add_argument('--step_size', default=2. / 255, type=float)
 
