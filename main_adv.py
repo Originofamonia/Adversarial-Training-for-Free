@@ -20,7 +20,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 from models.wideresnet import *
-from test_worst_acc import test
+from inference import test
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
@@ -56,17 +56,6 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     acc = 100. * correct / total
     print('Train acc:', acc)
 
-    print('Saving..')
-    state = {
-        'net': net.state_dict(),
-        'acc': acc,
-        'epoch': epoch,
-        'rng_state': torch.get_rng_state()
-    }
-    if not os.path.isdir('checkpoint'):
-        os.mkdir('checkpoint')
-    torch.save(state, './checkpoint/adv_ckpt.{}'.format(epoch))
-
 
 def adjust_learning_rate(optimizer, epoch):
     if epoch < 12:
@@ -82,6 +71,7 @@ def adjust_learning_rate(optimizer, epoch):
 def main():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--seed', default=9527, type=int)
+    parser.add_argument('--epoch', default=31, type=int)
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--weight_decay', default=5e-4, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
@@ -143,11 +133,15 @@ def main():
         nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
 
-    for epoch in range(start_epoch, 31):
+    for epoch in range(start_epoch, args.epoch):
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
         if epoch % 10 == 0:
             test(epoch, net, testloader, device, adversary)
+
+    if not os.path.isdir('checkpoint'):
+        os.mkdir('checkpoint')
+    torch.save(net.state_dict(), './checkpoint/adv_ckpt_{}.pt'.format(args.epoch))
 
 
 if __name__ == '__main__':

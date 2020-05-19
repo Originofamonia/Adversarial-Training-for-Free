@@ -51,7 +51,7 @@ def test(epoch, net, testloader, device, adversary):
 def main():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Testing')
     parser.add_argument('--seed', default=11111, type=int, help='seed')
-    parser.add_argument('--epoch', default=10, type=int, help='load checkpoint from that epoch')
+    parser.add_argument('--epoch', default=30, type=int, help='load checkpoint from that epoch')
     parser.add_argument('--model', default='wideresnet', type=str)
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--iteration', default=100, type=int)
@@ -76,15 +76,12 @@ def main():
                                            transform=transform_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
-    print('==> Building model {}..'.format(args.model))
     if args.model == 'wideresnet':
         net = WideResNet_28_10()
     else:
         raise ValueError('No such model.')
 
-    print('==> Loading from checkpoint epoch {}..'.format(args.epoch))
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.epoch))
+    checkpoint = torch.load('./checkpoint/ordinary_adv_ckpt.30')
     net.load_state_dict(checkpoint['net'])
     net = net.to(device)
     net.eval()
@@ -94,7 +91,7 @@ def main():
         nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
 
-    test(net, testloader, device, adversary, args)
+    test(args.epoch, net, testloader, device, adversary)
 
 
 if __name__ == '__main__':
