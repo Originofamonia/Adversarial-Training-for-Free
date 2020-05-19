@@ -43,7 +43,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
             adv_outputs = net.h_to_logits(h_adv)
             xent_loss = F.cross_entropy(adv_outputs, targets)
             h = net(inputs)
-            h_loss = F.kl_div(h_adv, h, reduction='batchmean')
+            h_loss = mse(h_adv, h)
             loss = h_loss + xent_loss
             loss.backward()
             optimizer.step()
