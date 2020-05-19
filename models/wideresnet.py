@@ -98,7 +98,7 @@ class WideResNet(nn.Module):
 
 
 def wide_resnet_28_10():
-    return WideResNet(34, 10, 10, 0.4)
+    return WideResNet(34, 10, 10, 0.3)
 
 
 # def WideResNet_28_10_cifar100():
