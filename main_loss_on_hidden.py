@@ -27,7 +27,7 @@ from models.iterative_projected_gradient import LinfPGDAttack
 def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     print('\nEpoch: %d' % epoch)
     net.train()
-    train_loss = 0
+    # train_loss = 0
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
@@ -40,21 +40,21 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
             x_adv.requires_grad_()
             h_adv = net(x_adv)
             adv_outputs = net.h_to_logits(h_adv)
-            loss = F.cross_entropy(adv_outputs, targets)
+            xent_loss = F.cross_entropy(adv_outputs, targets)
             h = net(inputs)
             h_loss = nn.MSELoss()(h_adv, h)
-            loss += h_loss
+            loss = h_loss + xent_loss
             loss.backward()
             optimizer.step()
             grad = x_adv.grad.data
             delta = delta.detach() + epsilon * torch.sign(grad.detach())
             delta = torch.clamp(delta, -epsilon, epsilon)
 
-            train_loss += loss.item()
             _, adv_predicted = adv_outputs.max(1)
             total += targets.size(0)
             correct += adv_predicted.eq(targets).sum().item()
-            iterator.set_description(str(adv_predicted.eq(targets).sum().item() / targets.size(0)))
+            desc = 'h_loss: ' + str(h_loss) + ' xent loss: ' + str(xent_loss)
+            iterator.set_description(desc=desc)
 
     acc = 100. * correct / total
     print('Train acc:', acc)

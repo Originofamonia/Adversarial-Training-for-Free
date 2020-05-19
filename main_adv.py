@@ -27,7 +27,7 @@ from models.iterative_projected_gradient import LinfPGDAttack
 def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     print('\nEpoch: %d' % epoch)
     net.train()
-    train_loss = 0
+    # train_loss = 0
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
@@ -47,11 +47,12 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
             delta = delta.detach() + epsilon * torch.sign(grad.detach())
             delta = torch.clamp(delta, -epsilon, epsilon)
 
-            train_loss += loss.item()
+            # train_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-            iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
+            desc = 'loss: ' + str(loss)
+            iterator.set_description(desc)
 
     acc = 100. * correct / total
     print('Train acc:', acc)
@@ -77,7 +78,7 @@ def main():
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=100, type=int)
-    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--batch_size', default=10, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()

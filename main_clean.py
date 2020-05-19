@@ -26,7 +26,7 @@ from models.iterative_projected_gradient import LinfPGDAttack
 def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     print('\nEpoch: %d' % epoch)
     net.train()
-    train_loss = 0
+    # train_loss = 0
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
@@ -42,11 +42,11 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
         loss.backward()
         optimizer.step()
 
-        train_loss += loss.item()
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-        iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
+        desc = 'loss: ' + str(loss)
+        iterator.set_description(desc)
 
     acc = 100. * correct / total
     print('Train acc:', acc)
@@ -122,7 +122,7 @@ def main():
         torch.set_rng_state(checkpoint['rng_state'])
 
     # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
-    optimizer = optim.Adam(net.parameters(), lr=1e-3)
+    optimizer = optim.Adam(net.parameters(), lr=4e-3, weight_decay=args.weight_decay)
 
     adversary = LinfPGDAttack(
         net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
