@@ -98,7 +98,7 @@ class WideResNet(nn.Module):
 
 
 def wide_resnet_28_10():
-    return WideResNet(34, 10, 10, 0.3)
+    return WideResNet(34, 10, 10, 0.4)
 
 
 # def WideResNet_28_10_cifar100():
@@ -110,8 +110,10 @@ def adjust_learning_rate(optimizer, epoch):
         lr = 1e-1
     elif 11 <= epoch < 22:
         lr = 1e-2
-    else:
+    elif 22 <= epoch < 30:
         lr = 1e-3
+    else:
+        lr = 1e-4
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr

@@ -64,13 +64,13 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
 def main():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--seed', default=9527, type=int)
-    parser.add_argument('--epoch', default=31, type=int)
+    parser.add_argument('--epoch', default=41, type=int)
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--weight_decay', default=5e-4, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=20, type=int)
-    parser.add_argument('--batch_size', default=10, type=int)
+    parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
@@ -110,15 +110,14 @@ def main():
     net = net.to(device)
 
     if args.resume is not None:
-        # Load checkpoint.
         print('==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
         checkpoint = torch.load('./checkpoint/adv_hloss_ckpt.{}'.format(args.resume))
         net.load_state_dict(checkpoint['net'])
         start_epoch = checkpoint['epoch'] + 1
-        torch.set_rng_state(checkpoint['rng_state'])
 
-    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay)
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay,
+                          nesterov=True)
 
     adversary = LinfPGDAttack(
         net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
@@ -130,9 +129,13 @@ def main():
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
 
     test(epoch, net, testloader, device, adversary)
-    if not os.path.isdir('checkpoint'):
-        os.mkdir('checkpoint')
-    torch.save(net.state_dict(), './checkpoint/adv_hloss_ckpt_{}.pt'.format(args.epoch))
+    # if not os.path.isdir('checkpoint'):
+    #     os.mkdir('checkpoint')
+    state = {
+        'net': net.state_dict(),
+        'epoch': args.epoch
+    }
+    torch.save(state, './checkpoint/adv_hloss_ckpt_{}.pt'.format(args.epoch))
 
 
 if __name__ == '__main__':
