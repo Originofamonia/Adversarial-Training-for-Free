@@ -103,8 +103,8 @@ def main():
     if args.resume is not None:
         print('==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.{}'.format(args.resume))
-        net.load_state_dict(checkpoint)
+        checkpoint = torch.load('./checkpoint/clean_ckpt.{}'.format(args.resume))
+        net.load_state_dict(checkpoint['net'])
         start_epoch = checkpoint['epoch'] + 1
         # torch.set_rng_state(checkpoint['rng_state'])
 
@@ -127,7 +127,7 @@ def main():
         'net': net.state_dict(),
         'epoch': args.epoch
     }
-    torch.save(state, './checkpoint/clean_ckpt{}.pt'.format(args.epoch))
+    torch.save(state, './checkpoint/clean_ckpt.{}'.format(args.epoch))
 
 
 if __name__ == '__main__':

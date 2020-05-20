@@ -135,7 +135,7 @@ def main():
         'net': net.state_dict(),
         'epoch': args.epoch
     }
-    torch.save(state, './checkpoint/adv_hloss_ckpt_{}.pt'.format(args.epoch))
+    torch.save(state, './checkpoint/adv_hloss_ckpt.{}'.format(args.epoch))
 
 
 if __name__ == '__main__':
