@@ -19,7 +19,7 @@ from models.utils import *
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
-def test(epoch, net, testloader, device, adversary):
+def adv_test(epoch, net, testloader, device, adversary):
     net.eval()
     adv_correct = 0
     clean_correct = 0
@@ -41,10 +41,28 @@ def test(epoch, net, testloader, device, adversary):
             clean_correct += predicted.eq(targets).sum().item()
             iterator.set_description(str(adv_predicted.eq(targets).sum().item() / targets.size(0)))
 
-    # Save checkpoint.
     adv_acc = 100. * adv_correct / total
     clean_acc = 100. * clean_correct / total
     print('Adv test Acc of ckpt.{}: {}'.format(epoch, adv_acc))
+    print('Clean test Acc of ckpt.{}: {}'.format(epoch, clean_acc))
+
+
+def clean_test(epoch, net, testloader, device):
+    net.eval()
+    clean_correct = 0
+    total = 0
+    with torch.no_grad():
+        iterator = tqdm(testloader, ncols=0, leave=False)
+        for batch_idx, (inputs, targets) in enumerate(iterator):
+            inputs, targets = inputs.to(device), targets.to(device)
+            h = net(inputs)
+            outputs = net.h_to_logits(h)
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            clean_correct += predicted.eq(targets).sum().item()
+            iterator.set_description(str(predicted.eq(targets).sum().item() / targets.size(0)))
+
+    clean_acc = 100. * clean_correct / total
     print('Clean test Acc of ckpt.{}: {}'.format(epoch, clean_acc))
 
 
@@ -91,7 +109,7 @@ def main():
         nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
 
-    test(args.epoch, net, testloader, device, adversary)
+    adv_test(args.epoch, net, testloader, device, adversary)
 
 
 if __name__ == '__main__':

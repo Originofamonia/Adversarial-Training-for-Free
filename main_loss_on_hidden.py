@@ -20,7 +20,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 from models.wideresnet import *
-from inference import test
+from inference import adv_test
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
@@ -128,7 +128,7 @@ def main():
         adjust_learning_rate(optimizer, epoch)
         train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
 
-    test(epoch, net, testloader, device, adversary)
+    adv_test(args.epoch, net, testloader, device, adversary)
     # if not os.path.isdir('checkpoint'):
     #     os.mkdir('checkpoint')
     state = {
