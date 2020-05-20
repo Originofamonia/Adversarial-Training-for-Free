@@ -106,11 +106,11 @@ def wide_resnet_34_10():
 
 
 def adjust_learning_rate(optimizer, epoch):
-    if epoch < 11:
+    if epoch < 10:
         lr = 1e-1
-    elif 11 <= epoch < 22:
+    elif 10 <= epoch < 20:
         lr = 1e-2
-    elif 22 <= epoch < 30:
+    elif 20 <= epoch < 30:
         lr = 1e-3
     else:
         lr = 1e-4
