@@ -93,7 +93,7 @@ def main():
     testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform_test)
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
-    net = wide_resnet_28_10()
+    net = wide_resnet_34_10()
     epsilon = args.epsilon
     m = args.m
     delta = torch.zeros(args.batch_size, 3, 32, 32)
