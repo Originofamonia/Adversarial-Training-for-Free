@@ -55,7 +55,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
 def main():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
     parser.add_argument('--seed', default=9527, type=int)
-    parser.add_argument('--epoch', default=41, type=int)
+    parser.add_argument('--epoch', default=51, type=int)
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--weight_decay', default=1e-3, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)

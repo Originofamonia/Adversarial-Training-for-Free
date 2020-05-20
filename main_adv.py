@@ -63,7 +63,7 @@ def main():
     parser.add_argument('--seed', default=9527, type=int)
     parser.add_argument('--epoch', default=41, type=int)
     parser.add_argument('--momentum', default=0.9, type=float)
-    parser.add_argument('--weight_decay', default=5e-4, type=float)
+    parser.add_argument('--weight_decay', default=1e-3, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=20, type=int)
