@@ -45,7 +45,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-        desc = 'loss: ' + str(loss.item())
+        desc = 'loss: ' + "{:10.4f}".format(loss.item())
         iterator.set_description(desc)
 
     acc = 100. * correct / total
@@ -61,7 +61,7 @@ def main():
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=20, type=int)
-    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--batch_size', default=10, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
