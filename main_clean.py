@@ -108,13 +108,14 @@ def main():
         start_epoch = checkpoint['epoch'] + 1
         # torch.set_rng_state(checkpoint['rng_state'])
 
-    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay,
-                          nesterov=True)
+    # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay,
+    #                       nesterov=True)
+    optimizer = optim.Adam(net.parameters(), lr=0.1, weight_decay=args.weight_decay)
 
-    adversary = LinfPGDAttack(
-        net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
-        nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
-        targeted=False)
+    # adversary = LinfPGDAttack(
+    #     net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
+    #     nb_iter=args.iteration, eps_iter=args.step_size, rand_init=True, clip_min=0.0, clip_max=1.0,
+    #     targeted=False)
 
     for epoch in range(start_epoch, args.epoch):
         adjust_learning_rate(optimizer, epoch)
