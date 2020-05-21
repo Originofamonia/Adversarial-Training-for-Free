@@ -23,8 +23,8 @@ from inference import clean_test
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
-def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
-    print('\nEpoch: %d' % epoch)
+def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args):
+    print('Epoch: {}/{}'.format(epoch, args.epoch))
     net.train()
     # train_loss = 0
     correct = 0
@@ -108,9 +108,8 @@ def main():
         start_epoch = checkpoint['epoch'] + 1
         # torch.set_rng_state(checkpoint['rng_state'])
 
-    # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay,
-    #                       nesterov=True)
-    optimizer = optim.Adam(net.parameters(), lr=0.1, weight_decay=args.weight_decay)
+    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=args.momentum, weight_decay=args.weight_decay,
+                          nesterov=True)
 
     # adversary = LinfPGDAttack(
     #     net, loss_fn=nn.CrossEntropyLoss(reduction="sum"), eps=args.epsilon,
@@ -119,7 +118,7 @@ def main():
 
     for epoch in range(start_epoch, args.epoch):
         adjust_learning_rate(optimizer, epoch)
-        train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
+        train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args)
 
     clean_test(args.epoch, net, testloader, device)
     # if not os.path.isdir('checkpoint'):

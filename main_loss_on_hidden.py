@@ -24,8 +24,8 @@ from inference import adv_test
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
-def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
-    print('\nEpoch: %d' % epoch)
+def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args):
+    print('Epoch: {}/{}'.format(epoch, args.epoch))
     net.train()
     # train_loss = 0
     correct = 0
@@ -45,7 +45,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
             xent_loss = F.cross_entropy(adv_outputs, targets)
             h = net(inputs)
             h_loss = kl_criterion(h_adv.log(), h)
-            loss = h_loss + xent_loss
+            loss = h_loss * 10 + xent_loss
             loss.backward()
             optimizer.step()
             grad = x_adv.grad.data
@@ -71,7 +71,7 @@ def main():
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=20, type=int)
-    parser.add_argument('--batch_size', default=10, type=int)
+    parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
@@ -127,7 +127,7 @@ def main():
 
     for epoch in range(start_epoch, args.epoch):
         adjust_learning_rate(optimizer, epoch)
-        train(epoch, net, trainloader, device, m, delta, optimizer, epsilon)
+        train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args)
 
     adv_test(args.epoch, net, testloader, device, adversary)
     # if not os.path.isdir('checkpoint'):
