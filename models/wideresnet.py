@@ -84,6 +84,7 @@ class WideResNet(nn.Module):
         out = self.block1(out)
         out = self.block2(out)
         out = self.block3(out)
+        out = normalize_tensor(out)
         # out = self.relu(self.bn1(out))
         # out = F.avg_pool2d(out, 8)
         # out = out.view(-1, self.nChannels)
@@ -117,3 +118,17 @@ def adjust_learning_rate(optimizer, epoch):
 
     for param_group in optimizer.param_groups:
         param_group['lr'] = lr
+
+
+def normalize_tensor(x):
+    shape = x.size()
+
+    x = x.view(shape[0], -1)
+    x -= x.min(1, keepdim=True)[0]
+    x += 1e-6  # prevent log(0)
+    x /= x.max(1, keepdim=True)[0]
+    x /= x.sum(1, keepdim=True)
+    # s = x.sum(1, keepdim=True)
+    x = x.view(shape)
+
+    return x

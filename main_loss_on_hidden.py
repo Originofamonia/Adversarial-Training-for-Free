@@ -31,6 +31,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
+    kl_criterion = nn.KLDivLoss(reduction='batchmean')
     mse = nn.MSELoss()
 
     for batch_idx, (inputs, targets) in enumerate(iterator):
@@ -43,7 +44,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon):
             adv_outputs = net.h_to_logits(h_adv)
             xent_loss = F.cross_entropy(adv_outputs, targets)
             h = net(inputs)
-            h_loss = mse(h_adv, h)
+            h_loss = kl_criterion(h_adv.log(), h)
             loss = h_loss + xent_loss
             loss.backward()
             optimizer.step()
@@ -70,7 +71,7 @@ def main():
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
     parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=20, type=int)
-    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--batch_size', default=10, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
