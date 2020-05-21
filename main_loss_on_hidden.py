@@ -31,8 +31,9 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args):
     correct = 0
     total = 0
     iterator = tqdm(trainloader, ncols=0, leave=False)
-    kl_criterion = nn.KLDivLoss(reduction='batchmean')
+    kl_criterion = nn.KLDivLoss(reduction='batchmean')  # kl_criterion(h_adv.log(), h)
     mse = nn.MSELoss()
+    cos = nn.CosineSimilarity()
 
     for batch_idx, (inputs, targets) in enumerate(iterator):
         inputs, targets = inputs.to(device), targets.to(device)
@@ -44,8 +45,8 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args):
             adv_outputs = net.h_to_logits(h_adv)
             xent_loss = F.cross_entropy(adv_outputs, targets)
             h = net(inputs)
-            h_loss = kl_criterion(h_adv.log(), h)
-            loss = h_loss * 10 + xent_loss
+            h_loss = cos(h_adv.view(args.batch_size, -1), h.view(args.batch_size, -1)).sum()
+            loss = h_loss * 1 + xent_loss
             loss.backward()
             optimizer.step()
             grad = x_adv.grad.data
@@ -55,7 +56,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args):
             _, adv_predicted = adv_outputs.max(1)
             total += targets.size(0)
             correct += adv_predicted.eq(targets).sum().item()
-            desc = 'h_loss: ' + "{:10.4f}".format(h_loss.item()) + ' xent loss: ' + "{:10.4f}".format(xent_loss.item())
+            desc = 'h_loss:' + "{:10.4f}".format(h_loss.item()) + ' xent_loss:' + "{:10.4f}".format(xent_loss.item())
             iterator.set_description(desc=desc)
 
     acc = 100. * correct / total

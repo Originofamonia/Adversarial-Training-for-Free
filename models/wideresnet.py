@@ -84,7 +84,7 @@ class WideResNet(nn.Module):
         out = self.block1(out)
         out = self.block2(out)
         out = self.block3(out)
-        out = self.normalize_tensor(out)
+        # out = self.normalize_tensor(out)
         # out = self.relu(self.bn1(out))
         # out = F.avg_pool2d(out, 8)
         # out = out.view(-1, self.nChannels)
@@ -97,18 +97,38 @@ class WideResNet(nn.Module):
         out = out.view(-1, self.nChannels)
         return self.fc(out)
 
-    def normalize_tensor(self, x):
-        shape = x.size()
+    # def normalize_tensor(self, x):  # KL div doesn't work. xent loss doesn't descent.
+    #     shape = x.size()
+    #     x = x.view(shape[0], -1)
+    #     x -= x.min(1, keepdim=True)[0]
+    #     x += 1e-6  # prevent log(0)
+    #     x /= x.max(1, keepdim=True)[0]
+    #     x /= x.sum(1, keepdim=True)
+    #     x = x.view(shape)
+    #
+    #     return x
 
-        x = x.view(shape[0], -1)
-        x -= x.min(1, keepdim=True)[0]
-        x += 1e-6  # prevent log(0)
-        x /= x.max(1, keepdim=True)[0]
-        x /= x.sum(1, keepdim=True)
-        # s = x.sum(1, keepdim=True)
-        x = x.view(shape)
+    def get_h1(self, inputs):
+        out = self.conv1(inputs)
+        return out
 
-        return x
+    def get_h2(self, inputs):
+        out = self.conv1(inputs)
+        out = self.block1(out)
+        return out
+
+    def get_h3(self, inputs):
+        out = self.conv1(inputs)
+        out = self.block1(out)
+        out = self.block2(out)
+        return out
+
+    def get_h4(self, inputs):
+        out = self.conv1(inputs)
+        out = self.block1(out)
+        out = self.block2(out)
+        out = self.block3(out)
+        return out
 
 
 def wide_resnet_34_10():
