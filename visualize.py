@@ -92,6 +92,73 @@ def draw_tsne_plot(x, y):
     plt.show()
 
 
+def bchw2bhwc(x):
+    if isinstance(x, np.ndarray):
+        pass
+    else:
+        raise
+
+    if x.ndim == 3:
+        return np.moveaxis(x, 0, 2)
+    if x.ndim == 4:
+        return np.moveaxis(x, 1, 3)
+
+
+def tensor2npimg(tensor):
+    return bchw2bhwc(tensor.cpu().numpy())
+
+
+def _show_images(imgs, enhance=127):
+    np_imgs = tensor2npimg(imgs)
+    # np_perturb = tensor2npimg(advimg - img)
+
+    # pred = imagenet_label2classname(predict_from_logits(model(img)))
+    # advpred = imagenet_label2classname(predict_from_logits(model(advimg)))
+
+    plt.figure(figsize=(10, 5))
+    # plt.title("Adversarial images")
+    plt.subplot(2, 5, 1)
+    plt.imshow(np_imgs[0])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 2)
+    plt.imshow(np_imgs[1])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 3)
+    plt.imshow(np_imgs[2])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 4)
+    plt.imshow(np_imgs[3])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 5)
+    plt.imshow(np_imgs[4])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 6)
+    plt.imshow(np_imgs[5])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 7)
+    plt.imshow(np_imgs[6])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 8)
+    plt.imshow(np_imgs[7])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 9)
+    plt.imshow(np_imgs[8])
+    plt.axis("off")
+
+    plt.subplot(2, 5, 10)
+    plt.imshow(np_imgs[9])
+    plt.axis("off")
+    plt.show()
+
+
 def main():
     clean_model = './checkpoint/clean_ckpt41.pt'
     device = 'cpu'  # 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -102,8 +169,8 @@ def main():
         nb_iter=20, eps_iter=2. / 255, rand_init=True, clip_min=0.0, clip_max=1.0,
         targeted=False)
     transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
-        transforms.RandomHorizontalFlip(),
+        # transforms.RandomCrop(32, padding=0),
+        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         # Normalization messes with l-inf bounds.
@@ -120,6 +187,7 @@ def main():
             h_orig = logits.view(10, -1)
             with torch.enable_grad():
                 adv = adversary.perturb(inputs, targets)
+            _show_images(adv)
             ah1, ah2, ah3, ah4, alogits = get_hidden_layer(net, clean_model, adv, device)
             ah = alogits.view(10, -1)
             h = torch.cat((h_orig, ah), 0)
