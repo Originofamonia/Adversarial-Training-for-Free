@@ -160,7 +160,7 @@ def _show_images(imgs, enhance=127):
 
 
 def main():
-    clean_model = './checkpoint/clean_ckpt41.pt'
+    clean_model = './checkpoint/adv_ckpt_41.pt'
     device = 'cpu'  # 'cuda' if torch.cuda.is_available() else 'cpu'
     batch_size = 50
     net = wide_resnet_34_10()
@@ -187,7 +187,7 @@ def main():
             h_orig = logits.view(10, -1)
             with torch.enable_grad():
                 adv = adversary.perturb(inputs, targets)
-            _show_images(adv)
+            # _show_images(adv)
             ah1, ah2, ah3, ah4, alogits = get_hidden_layer(net, clean_model, adv, device)
             ah = alogits.view(10, -1)
             h = torch.cat((h_orig, ah), 0)
