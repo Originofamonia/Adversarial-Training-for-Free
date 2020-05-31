@@ -66,6 +66,17 @@ def clean_test(epoch, net, testloader, device):
     print('Clean test Acc of ckpt.{}: {}'.format(epoch, clean_acc))
 
 
+def kl_div_loss(logits_q, logits_p, T):
+    assert logits_p.size() == logits_q.size()
+    b, c = logits_p.size()
+    p = nn.Softmax(dim=1)(logits_p / T)
+    q = nn.Softmax(dim=1)(logits_q / T)
+    epsilon = 1e-8
+    _p = (p + epsilon * torch.ones(b, c).cuda()) / (1.0 + c * epsilon)
+    _q = (q + epsilon * torch.ones(b, c).cuda()) / (1.0 + c * epsilon)
+    return (T ** 2) * torch.mean(torch.sum(_p * torch.log(_p / _q), dim=1))
+
+
 def main():
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Testing')
     parser.add_argument('--seed', default=11111, type=int, help='seed')

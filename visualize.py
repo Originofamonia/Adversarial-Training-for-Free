@@ -63,7 +63,7 @@ def draw_pca_plot(x, y):
                     c=color)
         # plt.text(mean.loc[digit, 'principal component 1'], mean.loc[digit, 'principal component 2'], digit,
         #          fontsize=14)
-    plt.title("PCA logits")
+    plt.title("PCA h4")
     plt.legend(digits)
     plt.grid()
     plt.show()
@@ -184,7 +184,7 @@ def main():
             inputs = torch.index_select(inputs, 0, indices)
             targets = torch.index_select(targets, 0, indices)
             h1, h2, h3, h4, logits = get_hidden_layer(net, clean_model, inputs, device)
-            h_orig = logits.view(10, -1)
+            h_orig = h4.view(10, -1)
             with torch.enable_grad():
                 adv = adversary.perturb(inputs, targets)
             # _show_images(adv)

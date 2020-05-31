@@ -20,7 +20,7 @@ from tqdm import tqdm
 import random
 import numpy as np
 from models.wideresnet import *
-from inference import adv_test
+from inference import adv_test, kl_div_loss
 from models.iterative_projected_gradient import LinfPGDAttack
 
 
@@ -45,7 +45,7 @@ def train(epoch, net, trainloader, device, m, delta, optimizer, epsilon, args):
             adv_outputs = net.h_to_logits(h_adv)
             xent_loss = F.cross_entropy(adv_outputs, targets)
             h = net(inputs)
-            h_loss = mse(h_adv, h)
+            h_loss = kl_div_loss(h_adv, h.detach(), args.temperature)
             loss = h_loss * 1 + xent_loss
             loss.backward()
             optimizer.step()
@@ -70,10 +70,12 @@ def main():
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--weight_decay', default=1e-3, type=float)
     parser.add_argument('--epsilon', default=8.0 / 255, type=float)
-    parser.add_argument('--m', default=10, type=int)
+    parser.add_argument('--m', default=8, type=int)
     parser.add_argument('--iteration', default=20, type=int)
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--step_size', default=2. / 255, type=float)
+    parser.add_argument('--temperature', default=1, type=float,
+                        help='temperature for smoothing the soft target')
     parser.add_argument('--resume', '-r', default=None, type=int, help='resume from checkpoint')
     args = parser.parse_args()
 

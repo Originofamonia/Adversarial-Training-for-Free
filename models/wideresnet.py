@@ -66,8 +66,8 @@ class WideResNet(nn.Module):
         # global average pooling and classifier
         self.bn1 = nn.BatchNorm2d(n_channels[3])
         self.relu = nn.ReLU(inplace=True)
-        self.fc1 = nn.Linear(n_channels[3], 1024)
-        self.fc2 = nn.Linear(1024, num_classes)
+        self.fc = nn.Linear(n_channels[3], num_classes)
+        # self.fc2 = nn.Linear(1024, num_classes)
         self.nChannels = n_channels[3]
 
         for m in self.modules():
@@ -89,15 +89,17 @@ class WideResNet(nn.Module):
         out = self.relu(self.bn1(out))
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.nChannels)
-        out = self.fc1(out)
         # out = self.fc(out)
+        # out = self.fc2(out)
         return out
 
     def h_to_logits(self, h):
         # out = self.relu(self.bn1(h))
         # out = F.avg_pool2d(out, 8)
         # out = out.view(-1, self.nChannels)
-        return self.fc2(h)
+        # return self.fc2(h)
+        out = self.fc(h)
+        return out
 
     # def normalize_tensor(self, x):  # KL div doesn't work. xent loss doesn't descent.
     #     shape = x.size()
