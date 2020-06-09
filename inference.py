@@ -110,7 +110,7 @@ def main():
     else:
         raise ValueError('No such model.')
 
-    checkpoint = torch.load('./checkpoint/ordinary_adv_ckpt.30')
+    checkpoint = torch.load('./checkpoint/adv_ckpt_41.pt')
     net.load_state_dict(checkpoint['net'])
     net = net.to(device)
     net.eval()
