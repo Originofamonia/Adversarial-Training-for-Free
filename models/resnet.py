@@ -47,7 +47,7 @@ class BasicBlock(nn.Module):
 
 # Used to calculate MI lower bound
 class ResNet(nn.Module):
-    def __init__(self, block, in_channels, h, num_blocks, dropout=0.3):
+    def __init__(self, block, in_channels, h, num_blocks, dropout=0.1):
         super(ResNet, self).__init__()
         self.in_planes = 64
         self.in_channels = in_channels

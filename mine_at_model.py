@@ -9,8 +9,12 @@ import torch.autograd as autograd
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
+import matplotlib.pyplot as plt
+import argparse
+from tqdm import tqdm
+
 from models.resnet import ResNet34
-from models.wideresnet import wide_resnet_34_10
+from models.wideresnet import wide_resnet_34_10, adjust_learning_rate
 
 
 def mutual_information(joint, marginal, mine_net):
@@ -67,15 +71,19 @@ def ma(a, window_size=100):
 
 def train(trainloader, testloader, robust_net, mine_net, mine_net_optim, device, epochs, h):
     #
+    iterator = tqdm(trainloader, ncols=0, leave=False)
     mi_lb_list = list()
     ma_et = 1.
     for i in range(1, epochs + 1):
         mine_net.train()
-        for j, data in enumerate(trainloader, 0):
+        # adjust_learning_rate(mine_net_optim, i)
+        for j, data in enumerate(iterator):
             batch = sample_batch(data, device, robust_net, h), \
                  sample_batch(data, device, robust_net, h, sample_mode='marginal')
             mi_lb, ma_et = learn_mine(batch, mine_net, mine_net_optim, ma_et)
             mi_lb_list.append(mi_lb.detach().cpu().numpy())
+            desc = 'mi_lb: ' + "{:10.4f}".format(mi_lb.item())
+            iterator.set_description(desc)
 
         print(mi_lb_list[-1])
 
@@ -92,7 +100,7 @@ def get_cifar10(batch_size):
     ])
 
     trainset = torchvision.datasets.CIFAR10(root='data', train=True, download=True, transform=transform_train)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=False, drop_last=True)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, drop_last=True)
     transform_test = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -102,36 +110,63 @@ def get_cifar10(batch_size):
     return trainloader, testloader
 
 
-def main():
+def draw():
+    plt.figure(figsize=[8, 5])
+    mi_hy = 'mutual_info/mi_lb_hy.txt'
+    mi_xy = 'mutual_info/mi_lb_xy.txt'
+    hy = np.loadtxt(mi_hy)
+    xy = np.loadtxt(mi_xy)
+    # hy = ma(hy)
+    # xy = ma(xy)
+    plot_x = np.arange(len(hy))
+    plt.plot(plot_x, hy, label='I(h, y)')
+    plt.plot(plot_x, xy, label='I(x, y)')
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Mutual Information')
+    plt.legend()
+    plt.savefig('mine_fig/hy_xy.png', dpi=300)
+
+
+def calc_mi():
+    parser = argparse.ArgumentParser(description='MINE robust model')
+    parser.add_argument('--seed', default=9527, type=int)
+    parser.add_argument('--epochs', default=21, type=int)
+    parser.add_argument('--learning_rate', default=5e-4, type=float)
+    parser.add_argument('--momentum', default=0.9, type=float)
+    parser.add_argument('--weight_decay', default=1e-3, type=float)
+    parser.add_argument('--h', default=True, type=bool)  # whether I(x, y): False or I(h, y): True
+    parser.add_argument('--batch_size', default=5, type=int)
+    args = parser.parse_args()
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     robust_model = 'checkpoint/adv_ckpt_41.pt'
     robust_net = wide_resnet_34_10()
     checkpoint = torch.load(robust_model)
     robust_net.load_state_dict(checkpoint['net'])
     robust_net.to(device)
-    epochs = 10
-    h = True  # whether I(x, y): False or I(h, y): True
-    if h:
+
+    if args.h:
         in_channels = 1280  # 6 = 3 * 2 for MI(x, y), 1280 = 640 * 2 for MI(h, y)
     else:
         in_channels = 6
-    learning_rate = 1e-3
-    batch_size = 100
-    resnet34 = ResNet34(in_channels, h).cuda()
-    trainloader, testloader = get_cifar10(batch_size)
-    optimizer = optim.Adam(resnet34.parameters(), lr=learning_rate)
-    mi_lb_list = train(trainloader, testloader, robust_net, resnet34, optimizer, device, epochs, h)
+
+    resnet34 = ResNet34(in_channels, args.h).cuda()
+    trainloader, testloader = get_cifar10(args.batch_size)
+    optimizer = optim.Adam(resnet34.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    mi_lb_list = train(trainloader, testloader, robust_net, resnet34, optimizer, device, args.epochs, args.h)
     result_cor_ma = ma(mi_lb_list)
-    print('h: {}, last MI: {}'.format(h, result_cor_ma[-1]))
-    if h:
-        with open('mi_lb_hy.txt', 'w') as filehandle:
+    print('h: {}, last MI: {}'.format(args.h, result_cor_ma[-1]))
+    if args.h:
+        with open('mi_hy.txt', 'w') as filehandle:
             for listitem in result_cor_ma:
                 filehandle.write('%s\n' % listitem)
     else:
-        with open('mi_lb_xy.txt', 'w') as filehandle:
+        with open('mi_xy.txt', 'w') as filehandle:
             for listitem in result_cor_ma:
                 filehandle.write('%s\n' % listitem)
 
 
 if __name__ == '__main__':
-    main()
+    calc_mi()
+    # draw()
