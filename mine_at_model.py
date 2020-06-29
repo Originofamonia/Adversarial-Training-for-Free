@@ -10,6 +10,7 @@ import torchvision
 import torchvision.transforms as transforms
 import numpy as np
 from models.resnet import ResNet34
+from models.wideresnet import wide_resnet_34_10
 
 
 def mutual_information(joint, marginal, mine_net):
@@ -38,7 +39,7 @@ def learn_mine(batch, mine_net, mine_net_optim, ma_et, ma_rate=0.01):
     return mi_lb, ma_et
 
 
-def sample_batch(data, device, sample_mode='joint'):
+def sample_batch(data, device, robust_net, h, sample_mode='joint'):
     """
     TODO: change this function to CIFAR10
     :param data:
@@ -49,15 +50,20 @@ def sample_batch(data, device, sample_mode='joint'):
     x, y = data
     x = x.to(device)
     y = y.to(device)
+    if h:
+        x = robust_net(x)
+        dims = 1, 640, 8, 8
+    else:
+        dims = 1, 3, 32, 32
     if sample_mode == 'joint':
         y = y.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
-        y = y.repeat(1, 3, 32, 32).type(torch.float)  # this dimension is only for I(x, y)
+        y = y.repeat(dims).type(torch.float)
         batch = torch.cat((x, y), 1)
     else:
         index = torch.randperm(y.shape[0])
         y = y[index]
         y = y.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
-        y = y.repeat(1, 3, 32, 32).type(torch.float)
+        y = y.repeat(dims).type(torch.float)
         batch = torch.cat((x, y), 1)
     return batch
 
@@ -66,20 +72,19 @@ def ma(a, window_size=100):
     return [np.mean(a[i:i+window_size]) for i in range(0, len(a)-window_size)]
 
 
-def train(trainloader, testloader, model, mine_net, mine_net_optim, device, epochs=int(1e+1),
-          log_freq=int(1e+3)):
+def train(trainloader, testloader, robust_net, mine_net, mine_net_optim, device, epochs, h):
     # TODO: adjust for CIFAR10 and ResNet34
     mi_lb_list = list()
     ma_et = 1.
     for i in range(1, epochs + 1):
         mine_net.train()
         for j, data in enumerate(trainloader, 0):
-            batch = sample_batch(data, device), \
-                 sample_batch(data, device, sample_mode='marginal')
+            batch = sample_batch(data, device, robust_net, h), \
+                 sample_batch(data, device, robust_net, h, sample_mode='marginal')
             mi_lb, ma_et = learn_mine(batch, mine_net, mine_net_optim, ma_et)
+
         mi_lb_list.append(mi_lb.detach().cpu().numpy())
-        if (i + 1) % log_freq == 0:
-            print(mi_lb_list[-1])
+        print(mi_lb_list[-1])
     return mi_lb_list
 
 
@@ -105,19 +110,33 @@ def get_cifar10(batch_size):
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    robust_model = '../checkpoint/adv_ckpt_41.pt'
-    in_channels = 6  # 6 = 3 * 2 for MI(x, y), 1280 = 640 * 2 for MI(h, y)
+    robust_model = 'checkpoint/adv_ckpt_41.pt'
+    robust_net = wide_resnet_34_10()
+    checkpoint = torch.load(robust_model)
+    robust_net.load_state_dict(checkpoint['net'])
+    robust_net.to(device)
+    epochs = 10
+    h = True  # whether I(x, y): False or I(h, y): True
+    if h:
+        in_channels = 1280  # 6 = 3 * 2 for MI(x, y), 1280 = 640 * 2 for MI(h, y)
+    else:
+        in_channels = 6
     learning_rate = 1e-3
     batch_size = 100
-    resnet34 = ResNet34(in_channels).cuda()
+    resnet34 = ResNet34(in_channels, h).cuda()
     trainloader, testloader = get_cifar10(batch_size)
     optimizer = optim.Adam(resnet34.parameters(), lr=learning_rate)
-    mi_lb_list = train(trainloader, testloader, robust_model, resnet34, optimizer, device)
+    mi_lb_list = train(trainloader, testloader, robust_net, resnet34, optimizer, device, epochs, h)
     result_cor_ma = ma(mi_lb_list)
-    print(result_cor_ma[-1])
-    with open('mi_lb_list.txt', 'w') as filehandle:
-        for listitem in result_cor_ma:
-            filehandle.write('%s\n' % listitem)
+    print('h: {}, last MI: {}'.format(h, result_cor_ma[-1]))
+    if h:
+        with open('mi_lb_hy.txt', 'w') as filehandle:
+            for listitem in result_cor_ma:
+                filehandle.write('%s\n' % listitem)
+    else:
+        with open('mi_lb_xy.txt', 'w') as filehandle:
+            for listitem in result_cor_ma:
+                filehandle.write('%s\n' % listitem)
 
 
 if __name__ == '__main__':
