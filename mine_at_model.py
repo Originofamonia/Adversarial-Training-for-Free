@@ -46,7 +46,8 @@ def learn_mine(batch, mine_net, mine_net_optim, ma_et, ma_rate=0.01):
 def sample_batch(data, device, robust_net, h, sample_mode='joint'):
     x, y = data
     x = x.to(device)
-    y = y.to(device)
+    y = y.type(torch.float).to(device)
+    y = (y - 0.45) / 10  # normalize y
     if h:
         x = robust_net(x)
         dims = 1, 640, 8, 8
@@ -85,7 +86,7 @@ def train(trainloader, testloader, robust_net, mine_net, mine_net_optim, device,
             desc = 'mi_lb: ' + "{:10.4f}".format(mi_lb.item())
             iterator.set_description(desc)
 
-        print(mi_lb_list[-1])
+        print('Epoch: {}; mi_lb: {}'.format(i, mi_lb_list[-1]))
 
     return mi_lb_list
 
@@ -132,7 +133,7 @@ def calc_mi():
     parser = argparse.ArgumentParser(description='MINE robust model')
     parser.add_argument('--seed', default=9527, type=int)
     parser.add_argument('--epochs', default=21, type=int)
-    parser.add_argument('--learning_rate', default=5e-4, type=float)
+    parser.add_argument('--learning_rate', default=1e-3, type=float)
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--weight_decay', default=1e-3, type=float)
     parser.add_argument('--h', default=True, type=bool)  # whether I(x, y): False or I(h, y): True
