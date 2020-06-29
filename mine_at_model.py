@@ -40,13 +40,6 @@ def learn_mine(batch, mine_net, mine_net_optim, ma_et, ma_rate=0.01):
 
 
 def sample_batch(data, device, robust_net, h, sample_mode='joint'):
-    """
-    TODO: change this function to CIFAR10
-    :param data:
-    :param batch_size:
-    :param sample_mode:
-    :return:
-    """
     x, y = data
     x = x.to(device)
     y = y.to(device)
@@ -73,19 +66,18 @@ def ma(a, window_size=100):
 
 
 def train(trainloader, testloader, robust_net, mine_net, mine_net_optim, device, epochs, h):
-    # TODO: adjust for CIFAR10 and ResNet34
+    #
     mi_lb_list = list()
     ma_et = 1.
-    mi_lb = 0
     for i in range(1, epochs + 1):
         mine_net.train()
         for j, data in enumerate(trainloader, 0):
             batch = sample_batch(data, device, robust_net, h), \
                  sample_batch(data, device, robust_net, h, sample_mode='marginal')
             mi_lb, ma_et = learn_mine(batch, mine_net, mine_net_optim, ma_et)
+            mi_lb_list.append(mi_lb.detach().cpu().numpy())
 
-        mi_lb_list.append(mi_lb.detach().cpu().numpy())
-        print(mi_lb)
+        print(mi_lb_list[-1])
 
     return mi_lb_list
 
