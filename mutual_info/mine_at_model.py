@@ -9,7 +9,6 @@ import torch.autograd as autograd
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
-import matplotlib.pyplot as plt
 from models.resnet import ResNet34
 
 
