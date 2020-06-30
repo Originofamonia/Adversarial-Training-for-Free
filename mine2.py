@@ -18,7 +18,7 @@ from tqdm import tqdm
 from models.resnet import ResNet34, ResNet2
 from models.wideresnet import wide_resnet_34_10, adjust_learning_rate
 from mutual_info.mine_sung import draw, get_cifar10, ma
-from mutual_info.mine_abdu import train_mine
+from mutual_info.mine_abdu import train_mine, train_mine_f_div, train_mine_density_ratio
 
 
 def calc_mi():
@@ -40,14 +40,16 @@ def calc_mi():
     robust_net.to(device)
 
     if args.h:
-        in_channels = 640  # 3 for MI(x, y), 640 for MI(h, y)
+        in_channels = 1280  # 3 for MI(x, y), 640 for MI(h, y)
     else:
         in_channels = 3
 
-    resnet34 = ResNet2(in_channels, args.h).cuda()
+    # mine_net = ResNet2(in_channels, args.h).cuda()
+    mine_net = ResNet34(in_channels, args.h).cuda()
     trainloader, testloader = get_cifar10(args.batch_size)
-    optimizer = optim.Adam(resnet34.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-    mi_lb_list = train_mine(trainloader, testloader, robust_net, resnet34, optimizer, device, args.epochs, args.h)
+    optimizer = optim.Adam(mine_net.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    mi_lb_list = train_mine_density_ratio(trainloader, testloader, robust_net, mine_net, optimizer, device, args.epochs,
+                                          args.h)
     result_cor_ma = ma(mi_lb_list)
     print('h: {}, last MI: {}'.format(args.h, result_cor_ma[-1]))
     if args.h:

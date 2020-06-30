@@ -37,7 +37,7 @@ def sample_batch(data, device, robust_net, h):
 def train_mine(trainloader, testloader, robust_net, mine_net, mine_net_optim, device, epochs, h):
     #
     iterator = tqdm(trainloader, ncols=0, leave=False)
-    mi_lb_list = list()
+    mi_mine = list()
 
     for i in range(1, epochs + 1):
         mine_net.train()
@@ -46,15 +46,73 @@ def train_mine(trainloader, testloader, robust_net, mine_net, mine_net_optim, de
             x_sample, y_sample, y_shuffle = sample_batch(data, device, robust_net, h)
             pred_xy = mine_net(x_sample, y_sample)
             pred_x_y = mine_net(x_sample, y_shuffle)
-            mi_lb = torch.mean(pred_xy) - torch.log(torch.mean(torch.exp(pred_x_y)))
+            mi = torch.mean(pred_xy) - torch.log(torch.mean(torch.exp(pred_x_y)))
+            loss = -mi
+            mine_net.zero_grad()
+            loss.backward()
+            mine_net_optim.step()
+            mi_mine.append(mi.detach().cpu().numpy())
+            desc = 'MI: ' + "{:10.4f}".format(mi.item())
+            iterator.set_description(desc)
+
+        print('Epoch: {}; MI: {}'.format(i, mi_mine[-1]))
+
+    return mi_mine
+
+
+def train_mine_f_div(trainloader, testloader, robust_net, mine_net, mine_net_optim, device, epochs, h):
+    #
+    iterator = tqdm(trainloader, ncols=0, leave=False)
+    mi_f = list()
+
+    for i in range(1, epochs + 1):
+        mine_net.train()
+
+        for j, data in enumerate(iterator):
+            x_sample, y_sample, y_shuffle = sample_batch(data, device, robust_net, h)
+            pred_xy = mine_net(x_sample, y_sample)
+            pred_x_y = mine_net(x_sample, y_shuffle)
+            mi_lb = torch.mean(pred_xy) - torch.mean(torch.exp(pred_x_y))
             loss = -mi_lb
             mine_net.zero_grad()
             loss.backward()
             mine_net_optim.step()
-            mi_lb_list.append(mi_lb.detach().cpu().numpy())
-            desc = 'mi_lb: ' + "{:10.4f}".format(mi_lb.item())
+            mi_f.append(mi_lb.detach().cpu().numpy())
+            desc = 'MI_f: ' + "{:10.4f}".format(mi_lb.item())
             iterator.set_description(desc)
 
-        print('Epoch: {}; mi_lb: {}'.format(i, mi_lb_list[-1]))
+        print('Epoch: {}; MI_f: {}'.format(i, mi_f[-1]))
 
-    return mi_lb_list
+    return mi_f
+
+
+def train_mine_density_ratio(trainloader, testloader, robust_net, mine_net, mine_net_optim, device, epochs, h):
+    #
+    iterator = tqdm(trainloader, ncols=0, leave=False)
+    crit = torch.nn.BCEWithLogitsLoss()
+    mi_dr = list()
+
+    for i in range(1, epochs + 1):
+        mine_net.train()
+
+        for j, data in enumerate(iterator):
+            x_sample, y_sample, y_shuffle = sample_batch(data, device, robust_net, h)
+            p_xy = torch.cat([x_sample, y_sample], dim=1)
+            p_x_y = torch.cat([x_sample, y_shuffle], dim=1)
+            labels = torch.cat([torch.ones(p_xy.size(0)), torch.zeros(p_x_y.size(0))]).to(device)
+
+            data_x = torch.cat([p_xy, p_x_y])
+            logits = mine_net(data_x)
+            loss = crit(logits, labels.view(-1, 1))
+            z = mine_net(p_xy)
+            mine_net.zero_grad()
+            loss.backward()
+            mine_net_optim.step()
+
+            mi = (torch.sigmoid(z)/(1 - torch.sigmoid(z))).log().mean()
+            desc = 'MI_dr: ' + "{:10.4f}".format(mi.item())
+            iterator.set_description(desc)
+
+        print('Epoch: {}; MI_dr: {}'.format(i, mi_dr[-1]))
+
+    return mi_dr
