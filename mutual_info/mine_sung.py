@@ -1,5 +1,6 @@
 """
 Use MINE to estimate the MI(x, y) and MI(h, y)
+https://github.com/sungyubkim/MINE-Mutual-Information-Neural-Estimation-/blob/master/MINE.ipynb
 """
 import torch
 import torch.nn as nn
@@ -20,7 +21,7 @@ from models.wideresnet import wide_resnet_34_10, adjust_learning_rate
 def mutual_information(joint, marginal, mine_net):
     t = mine_net(joint)
     et = torch.exp(mine_net(marginal))
-    mi_lb = torch.mean(t) - torch.log(torch.mean(et))
+    mi_lb = torch.mean(t) - torch.log(torch.mean(et - 1))
     return mi_lb, t, et
 
 
@@ -47,7 +48,7 @@ def sample_batch(data, device, robust_net, h, sample_mode='joint'):
     x, y = data
     x = x.to(device)
     y = y.type(torch.float).to(device)
-    y = (y - 0.45) / 10  # normalize y
+    y = (y - 0.45) / 9  # normalize y
     if h:
         x = robust_net(x)
         dims = 1, 640, 8, 8
@@ -113,8 +114,8 @@ def get_cifar10(batch_size):
 
 def draw():
     plt.figure(figsize=[8, 5])
-    mi_hy = 'mutual_info/mi_lb_hy.txt'
-    mi_xy = 'mutual_info/mi_lb_xy.txt'
+    mi_hy = 'mutual_info/mi_hy.txt'
+    mi_xy = 'mutual_info/mi_xy.txt'
     hy = np.loadtxt(mi_hy)
     xy = np.loadtxt(mi_xy)
     # hy = ma(hy)
@@ -169,5 +170,5 @@ def calc_mi():
 
 
 if __name__ == '__main__':
-    calc_mi()
-    # draw()
+    # calc_mi()
+    draw()

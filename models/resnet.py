@@ -82,8 +82,70 @@ class ResNet(nn.Module):
         return out
 
 
+class ResNetv2(nn.Module):
+    def __init__(self, block, in_channels, h, num_blocks, dropout=0.1):
+        super(ResNetv2, self).__init__()
+        self.in_planes1 = 64
+        self.in_planes2 = 64
+        self.in_channels = in_channels
+        self.h = h
+        self.conv1 = nn.Conv2d(self.in_channels, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv11 = nn.Conv2d(self.in_channels, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.bn2 = nn.BatchNorm2d(64)
+        self.layer1 = self._make_layer(block, 64, num_blocks[0], dropout, stride=1)
+        self.layer11 = self._make_layer2(block, 64, num_blocks[0], dropout, stride=1)
+        self.layer2 = self._make_layer(block, 128, num_blocks[1], dropout, stride=2)
+        self.layer22 = self._make_layer2(block, 128, num_blocks[1], dropout, stride=2)
+        self.layer3 = self._make_layer(block, 256, num_blocks[2], dropout, stride=2)
+        self.layer33 = self._make_layer2(block, 256, num_blocks[2], dropout, stride=2)
+
+        self.pool = nn.AvgPool2d(4)
+        self.linear = nn.Linear(1024, 1)
+
+    def _make_layer(self, block, planes, num_blocks, dropout, stride):
+        strides = [stride] + [1] * (num_blocks - 1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes1, planes, dropout, stride))
+            self.in_planes1 = planes * block.expansion
+        return nn.Sequential(*layers)
+
+    def _make_layer2(self, block, planes, num_blocks, dropout, stride):
+        strides = [stride] + [1] * (num_blocks - 1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes2, planes, dropout, stride))
+            self.in_planes2 = planes * block.expansion
+        return nn.Sequential(*layers)
+
+    def forward(self, x, y):
+        out2 = F.relu(self.bn1(self.conv11(y)))
+        out2 = self.layer11(out2)
+        out2 = self.layer22(out2)
+        out2 = self.layer33(out2)
+
+        out1 = F.relu(self.bn1(self.conv1(x)))
+        out1 = self.layer1(out1)
+        out1 = self.layer2(out1)
+        out1 = self.layer3(out1)
+
+        if not self.h:
+            out1 = self.pool(out1)
+            out2 = self.pool(out2)
+        out1 = out1.view(out1.size(0), -1)
+        out2 = out2.view(out2.size(0), -1)
+        out = out1 + out2
+        out = self.linear(out)
+        return out
+
+
 def ResNet34(in_channels, h):
     return ResNet(BasicBlock, in_channels, h, [3, 4, 6])
+
+
+def ResNet2(in_channels, h):
+    return ResNetv2(BasicBlock, in_channels, h, [3, 4, 6])
 
 
 def get_cifar10():
