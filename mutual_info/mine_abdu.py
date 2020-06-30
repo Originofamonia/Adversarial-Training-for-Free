@@ -110,6 +110,7 @@ def train_mine_density_ratio(trainloader, testloader, robust_net, mine_net, mine
             mine_net_optim.step()
 
             mi = (torch.sigmoid(z)/(1 - torch.sigmoid(z))).log().mean()
+            mi_dr.append(mi.item())
             desc = 'MI_dr: ' + "{:10.4f}".format(mi.item())
             iterator.set_description(desc)
 

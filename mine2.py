@@ -24,7 +24,7 @@ from mutual_info.mine_abdu import train_mine, train_mine_f_div, train_mine_densi
 def calc_mi():
     parser = argparse.ArgumentParser(description='MINE robust model')
     parser.add_argument('--seed', default=9527, type=int)
-    parser.add_argument('--epochs', default=21, type=int)
+    parser.add_argument('--epochs', default=11, type=int)
     parser.add_argument('--learning_rate', default=5e-4, type=float)
     parser.add_argument('--momentum', default=0.9, type=float)
     parser.add_argument('--weight_decay', default=1e-3, type=float)
@@ -42,7 +42,7 @@ def calc_mi():
     if args.h:
         in_channels = 1280  # 3 for MI(x, y), 640 for MI(h, y)
     else:
-        in_channels = 3
+        in_channels = 6
 
     # mine_net = ResNet2(in_channels, args.h).cuda()
     mine_net = ResNet34(in_channels, args.h).cuda()

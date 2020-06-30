@@ -60,5 +60,5 @@ def calc_mi():
 
 
 if __name__ == '__main__':
-    calc_mi()
-    # draw()
+    # calc_mi()
+    draw()
