@@ -51,7 +51,7 @@ def train_mine(trainloader, testloader, robust_net, mine_net, mine_net_optim, de
             mine_net.zero_grad()
             loss.backward()
             mine_net_optim.step()
-            mi_mine.append(mi.detach().cpu().numpy())
+            mi_mine.append(mi.item())
             desc = 'MI: ' + "{:10.4f}".format(mi.item())
             iterator.set_description(desc)
 
@@ -77,7 +77,7 @@ def train_mine_f_div(trainloader, testloader, robust_net, mine_net, mine_net_opt
             mine_net.zero_grad()
             loss.backward()
             mine_net_optim.step()
-            mi_f.append(mi_lb.detach().cpu().numpy())
+            mi_f.append(mi_lb.item())
             desc = 'MI_f: ' + "{:10.4f}".format(mi_lb.item())
             iterator.set_description(desc)
 

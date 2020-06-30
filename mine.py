@@ -50,11 +50,11 @@ def calc_mi():
     result_cor_ma = ma(mi_lb_list)
     print('h: {}, last MI: {}'.format(args.h, result_cor_ma[-1]))
     if args.h:
-        with open('mi_hy.txt', 'w') as filehandle:
+        with open('mi_hy_sung.txt', 'w') as filehandle:
             for listitem in result_cor_ma:
                 filehandle.write('%s\n' % listitem)
     else:
-        with open('mi_xy.txt', 'w') as filehandle:
+        with open('mi_xy_sung.txt', 'w') as filehandle:
             for listitem in result_cor_ma:
                 filehandle.write('%s\n' % listitem)
 

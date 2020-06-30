@@ -114,8 +114,8 @@ def get_cifar10(batch_size):
 
 def draw():
     plt.figure(figsize=[8, 5])
-    mi_hy = 'mutual_info/mi_hy.txt'
-    mi_xy = 'mutual_info/mi_xy.txt'
+    mi_hy = 'mutual_info/mi_hy_sung.txt'
+    mi_xy = 'mutual_info/mi_xy_sung.txt'
     hy = np.loadtxt(mi_hy)
     xy = np.loadtxt(mi_xy)
     # hy = ma(hy)
@@ -127,7 +127,7 @@ def draw():
     plt.xlabel('Iteration')
     plt.ylabel('Mutual Information')
     plt.legend()
-    plt.savefig('mine_fig/hy_xy.png', dpi=300)
+    plt.savefig('mine_fig/hy_xy_sung.png', dpi=300)
 
 
 def calc_mi():
@@ -160,11 +160,11 @@ def calc_mi():
     result_cor_ma = ma(mi_lb_list)
     print('h: {}, last MI: {}'.format(args.h, result_cor_ma[-1]))
     if args.h:
-        with open('mi_hy.txt', 'w') as filehandle:
+        with open('mi_hy_sung.txt', 'w') as filehandle:
             for listitem in result_cor_ma:
                 filehandle.write('%s\n' % listitem)
     else:
-        with open('mi_xy.txt', 'w') as filehandle:
+        with open('mi_xy_sung.txt', 'w') as filehandle:
             for listitem in result_cor_ma:
                 filehandle.write('%s\n' % listitem)
 
