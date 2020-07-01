@@ -21,7 +21,7 @@ from models.wideresnet import wide_resnet_34_10, adjust_learning_rate
 def mutual_information(joint, marginal, mine_net):
     t = mine_net(joint)
     et = torch.exp(mine_net(marginal))
-    mi_lb = torch.mean(t) - torch.log(torch.mean(et - 1))
+    mi_lb = torch.mean(t) - torch.log(torch.mean(et))
     return mi_lb, t, et
 
 
@@ -83,7 +83,7 @@ def train(trainloader, testloader, robust_net, mine_net, mine_net_optim, device,
             batch = sample_batch(data, device, robust_net, h), \
                  sample_batch(data, device, robust_net, h, sample_mode='marginal')
             mi_lb, ma_et = learn_mine(batch, mine_net, mine_net_optim, ma_et)
-            mi_lb_list.append(mi_lb.detach().cpu().numpy())
+            mi_lb_list.append(mi_lb.item())
             desc = 'mi_lb: ' + "{:10.4f}".format(mi_lb.item())
             iterator.set_description(desc)
 
@@ -113,9 +113,10 @@ def get_cifar10(batch_size):
 
 
 def draw():
+    version = 'sung'
     plt.figure(figsize=[8, 5])
-    mi_hy = 'mutual_info/mi_hy_sung.txt'
-    mi_xy = 'mutual_info/mi_xy_sung.txt'
+    mi_hy = 'mutual_info/mi_hy_{}.txt'.format(version)
+    mi_xy = 'mutual_info/mi_xy_{}.txt'.format(version)
     hy = np.loadtxt(mi_hy)
     xy = np.loadtxt(mi_xy)
     # hy = ma(hy)
@@ -123,11 +124,11 @@ def draw():
     plot_x = np.arange(len(hy))
     plt.plot(plot_x, hy, label='I(h, y)')
     plt.plot(plot_x, xy, label='I(x, y)')
-
+    plt.title('MINE {}'.format(version))
     plt.xlabel('Iteration')
     plt.ylabel('Mutual Information')
     plt.legend()
-    plt.savefig('mine_fig/hy_xy_sung.png', dpi=300)
+    plt.savefig('mine_fig/hy_xy_{}.png'.format(version), dpi=300)
 
 
 def calc_mi():
